@@ -94,7 +94,6 @@ runs:
       run: |
         mkdir -p "${{ inputs.cache-path }}"
         cd "${{ inputs.cache-path }}"
-    
         shallow_checkout() {
           # Param 1 is origin
           # Param 2 is branch
@@ -111,41 +110,14 @@ runs:
           git submodule update --depth 1
           cd ..
         }
-    
         git config --global advice.detachedHead false
-    
         for sdk in ${{ inputs.sdks }}; do
           shallow_checkout "https://github.com/alliedmodders/hl2sdk" "$sdk" "hl2sdk-$sdk"
         done
-    
         shallow_checkout "https://github.com/alliedmodders/ambuild" "${{ inputs.ambuild-ref }}" "ambuild"
-    
-        shallow_checkout "https://github.com/Dolly132/sourcemod" "${{ inputs.sm-ref }}" "sourcemod"
-    
-        echo "========================================"
-        echo "SourceMod checkout verification"
-        echo "========================================"
-    
-        cd "${{ inputs.cache-path }}/sourcemod"
-    
-        echo "Remote:"
-        git remote -v
-    
-        echo "Commit:"
-        git rev-parse HEAD
-    
-        echo "Commit details:"
-        git log -1 --oneline --decorate
-    
-        echo "Expected branch:"
-        echo "${{ inputs.sm-ref }}"
-    
-        cd -
-    
+        shallow_checkout "https://github.com/alliedmodders/sourcemod" "${{ inputs.sm-ref }}" "sourcemod"
         shallow_checkout "https://github.com/alliedmodders/metamod-source" "${{ inputs.mm-ref }}" "metamod-source"
-    
         shallow_checkout "https://github.com/alliedmodders/hl2sdk-manifests" "${{ inputs.hl2sdk-manifests-ref }}" "hl2sdk-manifests"
-    
         git config --global advice.detachedHead true
 
     - name: Install AMBuild
