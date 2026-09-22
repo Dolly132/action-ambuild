@@ -52,7 +52,7 @@ runs:
         SDKS_INPUT="${{ inputs.sdks }}"
         
         if [ "$SDKS_INPUT" = "all" ]; then
-          RESOLVED="css tf2 l4d2 sdk2013 swarm insurgency hl2dm episode1 dods blade bms"
+          RESOLVED="css tf2 l4d2 sdk2013 insurgency hl2dm episode1 dods blade bms"
           echo "RESOLVED_SDKS=$RESOLVED" >> $GITHUB_ENV
           echo "SDKS_KEY=all" >> $GITHUB_ENV
         else
