@@ -52,10 +52,8 @@ runs:
         SDKS_INPUT="${{ inputs.sdks }}"
         
         if [ "$SDKS_INPUT" = "all" ]; then
-          echo "Fetching all available SDK branches from hl2sdk repository..."
-          # Fetch all branch names from hl2sdk remote, stripping refs/heads/ prefix
-          ALL_BRANCHES=$(git ls-remote --heads https://github.com/alliedmodders/hl2sdk | awk -F'/' '{print $3}' | xargs)
-          echo "RESOLVED_SDKS=$ALL_BRANCHES" >> $GITHUB_ENV
+          RESOLVED="css tf2 l4d2 sdk2013 swarm insurgency hl2dm episode1 dods blade bms"
+          echo "RESOLVED_SDKS=$RESOLVED" >> $GITHUB_ENV
           echo "SDKS_KEY=all" >> $GITHUB_ENV
         else
           echo "RESOLVED_SDKS=$SDKS_INPUT" >> $GITHUB_ENV
@@ -117,6 +115,9 @@ runs:
         mkdir -p "${{ inputs.cache-path }}"
         cd "${{ inputs.cache-path }}"
         shallow_checkout() {
+          # Param 1 is origin
+          # Param 2 is branch
+          # Param 3 is name
           if [ ! -d "$3" ]; then
               git clone "$1" --depth 1 --branch "$2" "$3"
           fi
