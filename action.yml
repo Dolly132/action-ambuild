@@ -40,17 +40,28 @@ inputs:
     description: "HL2 SDK manifests git ref"
     required: true
   sdks:
-    description: "HL2 SDK space delimited list"
+    description: "HL2 SDK space delimited list or 'all'"
     required: true
 
 runs:
   using: "composite"
   steps:
-    - name: Concatenate SDK Names
+    - name: Resolve and Concatenate SDK Names
       shell: bash
       run: |
-        SDKS_VAR="${{ inputs.sdks }}"
-        echo "SDKS_KEY=${SDKS_VAR//[[:blank:]]/}" >> $GITHUB_ENV
+        SDKS_INPUT="${{ inputs.sdks }}"
+        
+        if [ "$SDKS_INPUT" = "all" ]; then
+          echo "Fetching all available SDK branches from hl2sdk repository..."
+          # Fetch all branch names from hl2sdk remote, stripping refs/heads/ prefix
+          ALL_BRANCHES=$(git ls-remote --heads https://github.com/alliedmodders/hl2sdk | awk -F'/' '{print $3}' | xargs)
+          echo "RESOLVED_SDKS=$ALL_BRANCHES" >> $GITHUB_ENV
+          echo "SDKS_KEY=all" >> $GITHUB_ENV
+        else
+          echo "RESOLVED_SDKS=$SDKS_INPUT" >> $GITHUB_ENV
+          SDKS_VAR="$SDKS_INPUT"
+          echo "SDKS_KEY=${SDKS_VAR//[[:blank:]]/}" >> $GITHUB_ENV
+        fi
 
     - name: Add LLVM apt repository
       shell: bash
@@ -106,9 +117,6 @@ runs:
         mkdir -p "${{ inputs.cache-path }}"
         cd "${{ inputs.cache-path }}"
         shallow_checkout() {
-          # Param 1 is origin
-          # Param 2 is branch
-          # Param 3 is name
           if [ ! -d "$3" ]; then
               git clone "$1" --depth 1 --branch "$2" "$3"
           fi
@@ -122,7 +130,7 @@ runs:
           cd ..
         }
         git config --global advice.detachedHead false
-        for sdk in ${{ inputs.sdks }}; do
+        for sdk in ${{ env.RESOLVED_SDKS }}; do
           shallow_checkout "https://github.com/alliedmodders/hl2sdk" "$sdk" "hl2sdk-$sdk"
         done
         shallow_checkout "https://github.com/alliedmodders/ambuild" "${{ inputs.ambuild-ref }}" "ambuild"
@@ -144,7 +152,7 @@ runs:
         mkdir -p build
         cd build
         python ${{ inputs.configure-path }} \
-          --sdks="${{ inputs.sdks }}" \
+          --sdks="${{ env.RESOLVED_SDKS }}" \
           --mms-path="${{ inputs.cache-path }}/metamod-source" \
           --sm-path="${{ inputs.cache-path }}/sourcemod" \
           --hl2sdk-root="${{ inputs.cache-path }}" \
